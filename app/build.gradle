@@ -1,0 +1,86 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 24
+    buildToolsVersion "24.0.0"
+    def versionPropsFile = file('version.properties')
+    def versionMajor
+    def versionMinor
+    def versionPatch
+    def versionBuild
+    def version_Code
+    def value
+    def runTasks
+    if (versionPropsFile.canRead()) {
+        def Properties versionProps = new Properties()
+
+        versionProps.load(new FileInputStream(versionPropsFile))
+         value = 0
+        versionPatch = versionProps['VERSION_PATCH'].toInteger()
+        versionBuild = versionProps['VERSION_BUILD'].toInteger()
+        version_Code = versionProps['VERSION_CODE'].toInteger()
+         runTasks = gradle.startParameter.taskNames
+        Console console = System.console()
+        console.printf "\n--------------------------"
+        console.printf "\ngradle.startParameter.taskNames"
+        console.printf "\n"+runTasks
+        console.printf "\n--------------------------"
+        if ( ':app:Release' in runTasks || ':app:assembleRelease' in runTasks) {
+            value = 1;
+        }
+         versionMajor = 1
+         versionMinor = 3
+    } else {
+        throw new GradleException("Could not read version.properties!")
+    }
+    /*Wrapping inside a method avoids auto incrementing on every gradle task run. Now it runs only when we build apk*/
+
+        if (versionPropsFile.canRead()) {
+            def Properties versionProps = new Properties()
+            versionProps.load(new FileInputStream(versionPropsFile))
+            versionPatch = versionProps['VERSION_PATCH'].toInteger() + value
+            versionBuild = versionProps['VERSION_BUILD'].toInteger() + 1
+            version_Code = versionProps['VERSION_CODE'].toInteger() + value
+            versionProps['VERSION_PATCH'] = versionPatch.toString()
+            versionProps['VERSION_BUILD'] = versionBuild.toString()
+            versionProps['VERSION_CODE'] = version_Code.toString()
+            versionProps.store(versionPropsFile.newWriter(), null)
+        } else {
+            throw new GradleException("Could not read version.properties!")
+        }
+
+
+    defaultConfig {
+        applicationId "com.mobiliha.mth.autoincrementbuildnumber"
+        minSdkVersion 9
+        targetSdkVersion 19
+        versionCode version_Code
+        versionName "${versionMajor}.${versionMinor}.${versionPatch} (${versionBuild})"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+    buildTypes {
+        release {
+
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+    }
+
+}
+allprojects {
+    repositories {
+
+    }
+}
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:24.+'
+    testCompile 'junit:junit:4.12'
+
+
+}
